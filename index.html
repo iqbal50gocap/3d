@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>GLB FPS Viewer</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; }
+    #instructions {
+      position: absolute;
+      top: 40%;
+      width: 100%;
+      text-align: center;
+      color: white;
+      font-size: 24px;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+  <div id="instructions">Click to Start</div>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.154.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.154.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.154.0/examples/js/controls/PointerLockControls.js"></script>
+  <script>
+    let scene = new THREE.Scene();
+    let camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+    let renderer = new THREE.WebGLRenderer({antialias: true});
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const light = new THREE.HemisphereLight(0xffffff, 0x444444);
+    light.position.set(0, 20, 0);
+    scene.add(light);
+
+    // Kontrol FPS
+    const controls = new THREE.PointerLockControls(camera, document.body);
+    const instructions = document.getElementById('instructions');
+    instructions.addEventListener('click', () => {
+      controls.lock();
+    });
+    controls.addEventListener('lock', () => {
+      instructions.style.display = 'none';
+    });
+    controls.addEventListener('unlock', () => {
+      instructions.style.display = '';
+    });
+    scene.add(controls.getObject());
+
+    // Load GLB
+    const loader = new THREE.GLTFLoader();
+    loader.load('model.glb', (gltf) => {
+      scene.add(gltf.scene);
+    }, undefined, console.error);
+
+    camera.position.y = 1.6; // tinggi kepala
+
+    // Gerakan dasar
+    let move = { forward: false, backward: false, left: false, right: false };
+    const velocity = new THREE.Vector3();
+
+    document.addEventListener('keydown', (e) => {
+      switch(e.code) {
+        case 'KeyW': move.forward = true; break;
+        case 'KeyS': move.backward = true; break;
+        case 'KeyA': move.left = true; break;
+        case 'KeyD': move.right = true; break;
+      }
+    });
+    document.addEventListener('keyup', (e) => {
+      switch(e.code) {
+        case 'KeyW': move.forward = false; break;
+        case 'KeyS': move.backward = false; break;
+        case 'KeyA': move.left = false; break;
+        case 'KeyD': move.right = false; break;
+      }
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const speed = 0.1;
+      if (move.forward) controls.moveForward(speed);
+      if (move.backward) controls.moveForward(-speed);
+      if (move.left) controls.moveRight(-speed);
+      if (move.right) controls.moveRight(speed);
+
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth/window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
