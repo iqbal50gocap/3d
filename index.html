@@ -1,19 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>FPS GLB Viewer with Jump</title>
+  <meta charset="UTF-8"/>
+  <title>Offline 3D FPS Viewer</title>
   <style>
     body { margin: 0; overflow: hidden; background: #000; }
     #instructions {
-      position: absolute;
-      top: 40%;
-      width: 100%;
-      text-align: center;
-      color: white;
-      font-size: 24px;
-      z-index: 10;
-      font-family: sans-serif;
+      position: absolute; top: 40%; width: 100%;
+      text-align: center; color: white; font-size: 24px;
+      z-index: 10; font-family: sans-serif;
     }
   </style>
 </head>
@@ -25,7 +20,7 @@
     import { GLTFLoader } from './js/GLTFLoader.js';
     import { PointerLockControls } from './js/PointerLockControls.js';
 
-    let scene = new THREE.Scene();
+    const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x111111);
 
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
@@ -41,85 +36,36 @@
     document.getElementById('instructions').addEventListener('click', () => controls.lock());
     controls.addEventListener('lock', () => document.getElementById('instructions').style.display = 'none');
     controls.addEventListener('unlock', () => document.getElementById('instructions').style.display = '');
-
     scene.add(controls.getObject());
 
-    const loader = new GLTFLoader();
-    loader.load('model.glb', gltf => scene.add(gltf.scene), undefined, error => console.error(error));
+    new GLTFLoader().load('model.glb', gltf => scene.add(gltf.scene), undefined, err => console.error(err));
 
     const move = { forward: false, backward: false, left: false, right: false };
-    let canJump = false;
-    let velocity = new THREE.Vector3();
-    let direction = new THREE.Vector3();
-    const gravity = 9.8;
-    const raycaster = new THREE.Raycaster();
-    let prevTime = performance.now();
-
-    document.addEventListener('keydown', event => {
-      switch (event.code) {
-        case 'KeyW': move.forward = true; break;
-        case 'KeyS': move.backward = true; break;
-        case 'KeyA': move.left = true; break;
-        case 'KeyD': move.right = true; break;
-        case 'Space':
-          if (canJump === true) velocity.y += 5.0;
-          canJump = false;
-          break;
-      }
+    document.addEventListener('keydown', e => {
+      if(e.code === 'KeyW') move.forward = true;
+      if(e.code === 'KeyS') move.backward = true;
+      if(e.code === 'KeyA') move.left = true;
+      if(e.code === 'KeyD') move.right = true;
     });
-
-    document.addEventListener('keyup', event => {
-      switch (event.code) {
-        case 'KeyW': move.forward = false; break;
-        case 'KeyS': move.backward = false; break;
-        case 'KeyA': move.left = false; break;
-        case 'KeyD': move.right = false; break;
-      }
+    document.addEventListener('keyup', e => {
+      if(e.code === 'KeyW') move.forward = false;
+      if(e.code === 'KeyS') move.backward = false;
+      if(e.code === 'KeyA') move.left = false;
+      if(e.code === 'KeyD') move.right = false;
     });
 
     function animate() {
-      requestAnimationFrame(animate);
-
-      const time = performance.now();
-      const delta = (time - prevTime) / 1000;
-
-      raycaster.ray.origin.copy(controls.getObject().position);
-      raycaster.ray.origin.y -= 1.6;
-
-      const intersections = raycaster.intersectObjects(scene.children, true);
-      const onObject = intersections.length > 0;
-
-      velocity.y -= gravity * delta;
-      if (onObject) {
-        velocity.y = Math.max(0, velocity.y);
-        canJump = true;
-      }
-
-      direction.z = Number(move.forward) - Number(move.backward);
-      direction.x = Number(move.right) - Number(move.left);
-      direction.normalize();
-
-      if (move.forward || move.backward) velocity.z = direction.z * 10.0 * delta;
-      if (move.left || move.right) velocity.x = direction.x * 10.0 * delta;
-
-      controls.moveRight(velocity.x * delta);
-      controls.moveForward(velocity.z * delta);
-      controls.getObject().position.y += velocity.y * delta;
-
-      if (controls.getObject().position.y < 1.6) {
-        velocity.y = 0;
-        controls.getObject().position.y = 1.6;
-        canJump = true;
-      }
-
+      if (move.forward) controls.moveForward(0.1);
+      if (move.backward) controls.moveForward(-0.1);
+      if (move.left) controls.moveRight(-0.1);
+      if (move.right) controls.moveRight(0.1);
       renderer.render(scene, camera);
-      prevTime = time;
+      requestAnimationFrame(animate);
     }
-
     animate();
 
     window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.aspect = window.innerWidth/window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
