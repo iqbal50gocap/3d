@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>GLB FPS Viewer</title>
+  <title>3D GLB Viewer - FPS Style</title>
   <style>
-    body { margin: 0; overflow: hidden; }
+    body { margin: 0; overflow: hidden; background: #000; }
     canvas { display: block; }
     #instructions {
       position: absolute;
@@ -14,18 +14,28 @@
       color: white;
       font-size: 24px;
       z-index: 10;
+      font-family: sans-serif;
     }
   </style>
 </head>
 <body>
   <div id="instructions">Click to Start</div>
+
+  <!-- Three.js -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.154.0/build/three.min.js"></script>
+  <!-- GLTF Loader -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.154.0/examples/js/loaders/GLTFLoader.js"></script>
+  <!-- Pointer Lock Controls -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.154.0/examples/js/controls/PointerLockControls.js"></script>
+
   <script>
     let scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x111111);
+
     let camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-    let renderer = new THREE.WebGLRenderer({antialias: true});
+    camera.position.y = 1.6;
+
+    let renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
@@ -33,42 +43,46 @@
     light.position.set(0, 20, 0);
     scene.add(light);
 
-    // Kontrol FPS
     const controls = new THREE.PointerLockControls(camera, document.body);
     const instructions = document.getElementById('instructions');
+
     instructions.addEventListener('click', () => {
       controls.lock();
     });
+
     controls.addEventListener('lock', () => {
       instructions.style.display = 'none';
     });
+
     controls.addEventListener('unlock', () => {
       instructions.style.display = '';
     });
+
     scene.add(controls.getObject());
 
     // Load GLB
     const loader = new THREE.GLTFLoader();
-    loader.load('model.glb', (gltf) => {
+    loader.load('model.glb', function (gltf) {
       scene.add(gltf.scene);
-    }, undefined, console.error);
+    }, undefined, function (error) {
+      console.error(error);
+    });
 
-    camera.position.y = 1.6; // tinggi kepala
-
-    // Gerakan dasar
+    // Movement
     let move = { forward: false, backward: false, left: false, right: false };
     const velocity = new THREE.Vector3();
 
-    document.addEventListener('keydown', (e) => {
-      switch(e.code) {
+    document.addEventListener('keydown', function (event) {
+      switch (event.code) {
         case 'KeyW': move.forward = true; break;
         case 'KeyS': move.backward = true; break;
         case 'KeyA': move.left = true; break;
         case 'KeyD': move.right = true; break;
       }
     });
-    document.addEventListener('keyup', (e) => {
-      switch(e.code) {
+
+    document.addEventListener('keyup', function (event) {
+      switch (event.code) {
         case 'KeyW': move.forward = false; break;
         case 'KeyS': move.backward = false; break;
         case 'KeyA': move.left = false; break;
@@ -87,6 +101,7 @@
 
       renderer.render(scene, camera);
     }
+
     animate();
 
     window.addEventListener('resize', () => {
